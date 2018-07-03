@@ -275,6 +275,7 @@ GPXParser.prototype._time = function (el, obj, key) {
 }; // _time
 
 GPXParser.prototype._link = function (el, obj) {
+  var self = this;
   var v = {};
   var url = this._url (el, v, 'url');
   if (!v.url) return;
@@ -282,7 +283,7 @@ GPXParser.prototype._link = function (el, obj) {
     if (child.localName === 'text') {
       self._string (child, v, 'text');
     } else if (child.localName === 'type') {
-      self._string (child, v, 'type');
+      self._string (child, v, 'mime_type');
     }
   });
   obj.links.push (v);
@@ -321,12 +322,12 @@ GPXParser.prototype._urlContent = function (el, obj, key) {
 GPXParser.prototype._person = function (el, obj, key) {
   if (obj[key] != null) return;
   var self = this;
-  var person = {};
+  var person = {links: []};
   Array.prototype.forEach.call (el.childNodes, function (child) {
     if (child.localName === 'name') {
       self._string (child, person, 'name');
     } else if (child.localName === 'link') {
-      self._url (child, person, 'url');
+      self._link (child, person);
     } else if (child.localName === 'email') {
       if (person.email == null) {
         var left = child.getAttribute ('id');
