@@ -35,6 +35,20 @@
           } else if (typeof o[k] === 'string') {
             return serialize (k) + ":" + (new Date (o[k])).toISOString ();
           }
+        } else if (k === 'time_zone_offset') {
+          if (typeof o[k] === 'number') {
+            var v = o[k];
+            if (v === 0) return serialize (k) + ':"Z"';
+            var sign = v < 0 ? '-' : '+';
+            if (v < 0) v = -v;
+            v = Math.floor (v / 60);
+            var min = v % 60;
+            if (min < 10) min = '0' + min;
+            v = Math.floor (v / 60);
+            var h = '' + v;
+            if (h < 10) h = '0' + h;
+            return serialize (k) + ":" + serialize (sign + h + ':' + min);
+          }
         }
         return serialize (k) + ":" + serialize (o[k]);
       }).join (",\n") + "}";
@@ -51,6 +65,7 @@
   var tm = new SAMI.Test.Manager (r, new SAMI.StringContainer.Element (tap));
   Promise.all ([
     'gpx-1.dat',
+    'gpx-2.dat',
     'nongpx-1.dat',
     'point-1.dat',
     'point-2.dat',

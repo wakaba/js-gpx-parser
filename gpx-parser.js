@@ -23,6 +23,10 @@ GPXParser.prototype.parseGPXElement = function (el) {
   if (creator !== null && creator !== '') {
     dataSet.generator = creator;
   }
+  var offset = el.getAttributeNS ('data:,gpx', 'tzoffset');
+  if (offset !== null && offset !== '') {
+    dataSet.time_zone_offset = self._tzOffset (offset); // or null
+  }
   Array.prototype.forEach.call (el.childNodes, function (child) {
     if (child.localName === 'metadata') {
       Array.prototype.forEach.call (child.childNodes, function (gc) {
@@ -361,12 +365,25 @@ GPXParser.prototype._license = function (el, obj, key) {
 }; // _license
 
 GPXParser.prototype._globalDT = function (s) {
-  if (/^[0-9]{4}-[0-9]{2}-[0-9]{2}[T ][0-9]{2}:[0-9]{2}(?::[0-9]{2})(?:Z|[+-][0-9]{2}:[0-9]{2})$/.test (s)) {
+  if (/^[0-9]{4}-[0-9]{2}-[0-9]{2}[T ][0-9]{2}:[0-9]{2}(?::[0-9]{2})(?:Z|[+-](?:[01][0-9]|2[0-3]):?[0-5][0-9])$/.test (s)) {
     return new Date (s).valueOf () / 1000;
   } else {
     return null;
   }
 }; // _globalDT
+
+GPXParser.prototype._tzOffset = function (s) {
+  var m = s.match (/^([+-])([01][0-9]|2[0-3]):?([0-5][0-9])$/);
+  if (m) {
+    var v = parseInt (m[2]) * 60 + parseInt (m[3]);
+    if (m[1] === '-') v = -v;
+    return v * 60;
+  } else if (s === 'Z') {
+    return 0;
+  } else {
+    return null;
+  }
+}; // _tzOffset
 
 GPXParser.prototype._childText = function (el) {
   return Array.prototype.map.call (el.childNodes, function (child) {
