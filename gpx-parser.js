@@ -18,7 +18,7 @@ GPXParser.prototype.parseDocument = function (doc) {
 
 GPXParser.prototype.parseGPXElement = function (el) {
   var self = this;
-  var dataSet = {waypoints: [], routes: [], tracks: []};
+  var dataSet = {waypoints: [], routes: [], tracks: [], links: []};
   var creator = el.getAttribute ('creator');
   if (creator !== null && creator !== '') {
     dataSet.generator = creator;
@@ -33,7 +33,7 @@ GPXParser.prototype.parseGPXElement = function (el) {
         } else if (gc.localName === 'keywords') {
           self._string (gc, dataSet, 'keywords');
         } else if (gc.localName === 'link') {
-          self._url (gc, dataSet, 'page_url');
+          self._link (gc, dataSet);
         } else if (gc.localName === 'author') {
           self._person (gc, dataSet, 'author');
         } else if (gc.localName === 'copyright') {
@@ -88,7 +88,6 @@ GPXParser.prototype._pointFields = {
   sym: ['symbol_name', '_string'],
   type: ['type', '_string'],
   fix: ['fix', '_string'],
-  link: ['page_url', '_url'],
 };
 
 GPXParser.prototype._pointExtFields = {
@@ -117,7 +116,6 @@ GPXParser.prototype._routeFields = {
   src: ['source', '_string'],
   type: ['type', '_string'],
   number: ['number', '_nnnumber'],
-  link: ['page_url', '_url'],
 };
 
 GPXParser.prototype._trackFields = {
@@ -127,18 +125,19 @@ GPXParser.prototype._trackFields = {
   src: ['source', '_string'],
   type: ['type', '_string'],
   number: ['number', '_nnnumber'],
-  link: ['page_url', '_url'],
 };
 
 GPXParser.prototype._point = function (el) {
   var self = this;
-  var point = {};
+  var point = {links: []};
   point.lat = self._latValue (el.getAttribute ('lat'));
   point.lon = self._lonValue (el.getAttribute ('lon'));
   Array.prototype.forEach.call (el.childNodes, function (child) {
     var field = self._pointFields[child.localName];
     if (field) {
       self[field[1]] (child, point, field[0]);
+    } else if (child.localName === 'link') {
+      self._link (child, point);
     } else if (child.localName === 'extensions') {
       Array.prototype.forEach.call (child.childNodes, function (gc) {
         var field = self._pointExtFields[gc.localName];
@@ -160,13 +159,15 @@ GPXParser.prototype._point = function (el) {
 
 GPXParser.prototype._route = function (el) {
   var self = this;
-  var route = {points: []};
+  var route = {points: [], links: []};
   Array.prototype.forEach.call (el.childNodes, function (child) {
     var field = self._routeFields[child.localName];
     if (field) {
       self[field[1]] (child, route, field[0]);
     } else if (child.localName === 'rtept') {
       route.points.push (self._point (child));
+    } else if (child.localName === 'link') {
+      self._link (child, route);
     } 
   });
   return route;
@@ -174,7 +175,7 @@ GPXParser.prototype._route = function (el) {
 
 GPXParser.prototype._track = function (el) {
   var self = this;
-  var track = {segments: []};
+  var track = {segments: [], links: []};
   Array.prototype.forEach.call (el.childNodes, function (child) {
     var field = self._trackFields[child.localName];
     if (field) {
@@ -187,7 +188,9 @@ GPXParser.prototype._track = function (el) {
         }
       });
       track.segments.push (segment);
-    } 
+    } else if (child.localName === 'link') {
+      self._link (child, track);
+    }
   });
   return track;
 }; // _track
@@ -271,6 +274,20 @@ GPXParser.prototype._time = function (el, obj, key) {
   obj[key] = this._globalDT (this._childText (el));
 }; // _time
 
+GPXParser.prototype._link = function (el, obj) {
+  var v = {};
+  var url = this._url (el, v, 'url');
+  if (!v.url) return;
+  Array.prototype.forEach.call (el.childNodes, function (child) {
+    if (child.localName === 'text') {
+      self._string (child, v, 'text');
+    } else if (child.localName === 'type') {
+      self._string (child, v, 'type');
+    }
+  });
+  obj.links.push (v);
+}; // _link
+
 GPXParser.prototype._url = function (el, obj, key) {
   if (obj[key] != null) return;
   var href = el.getAttribute ('href');
@@ -309,7 +326,7 @@ GPXParser.prototype._person = function (el, obj, key) {
     if (child.localName === 'name') {
       self._string (child, person, 'name');
     } else if (child.localName === 'link') {
-      self._url (child, person, 'page_url');
+      self._url (child, person, 'url');
     } else if (child.localName === 'email') {
       if (person.email == null) {
         var left = child.getAttribute ('id');
@@ -335,7 +352,7 @@ GPXParser.prototype._license = function (el, obj, key) {
     if (child.localName === 'year') {
       self._year (child, license, 'year');
     } else if (child.localName === 'license') {
-      self._urlContent (child, license, 'page_url');
+      self._urlContent (child, license, 'url');
     }
   });
   obj[key] = license;
@@ -362,21 +379,21 @@ GPXParser.prototype._childText = function (el) {
 
 /* License
 
-Copyright 2016 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2018 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
+the Free Software Foundation; either version 2 of the License, or (at
+your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program; see the file COPYING.  If not, write to
-the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.
+along with this program; see the file COPYING.  If not, write to the
+Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
+MA 02111-1307, USA.
 
 */
