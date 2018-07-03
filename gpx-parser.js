@@ -132,6 +132,7 @@ GPXParser.prototype._point = function (el) {
   var point = {links: []};
   point.lat = self._latValue (el.getAttribute ('lat'));
   point.lon = self._lonValue (el.getAttribute ('lon'));
+  point.road_type = el.getAttributeNS ('data:,gpx', 'road');
   Array.prototype.forEach.call (el.childNodes, function (child) {
     var field = self._pointFields[child.localName];
     if (field) {
