@@ -365,7 +365,7 @@ GPXParser.prototype._license = function (el, obj, key) {
 }; // _license
 
 GPXParser.prototype._globalDT = function (s) {
-  if (/^[0-9]{4}-[0-9]{2}-[0-9]{2}[T ][0-9]{2}:[0-9]{2}(?::[0-9]{2})(?:Z|[+-](?:[01][0-9]|2[0-3]):?[0-5][0-9])$/.test (s)) {
+  if (/^[0-9]{4}-[0-9]{2}-[0-9]{2}[T ][0-9]{2}:[0-9]{2}(?::[0-9]{2}(?:\.[0-9]+|)|)(?:Z|[+-](?:[01][0-9]|2[0-3]):?[0-5][0-9])$/.test (s)) {
     return new Date (s).valueOf () / 1000;
   } else {
     return null;
