@@ -137,6 +137,7 @@ GPXParser.prototype._point = function (el) {
   point.lat = self._latValue (el.getAttribute ('lat'));
   point.lon = self._lonValue (el.getAttribute ('lon'));
   point.road_type = el.getAttributeNS ('data:,gpx', 'road');
+  point.to_distance = self._nnNumberValue (el.getAttributeNS ('data:,gpx', 'todistance'));
   Array.prototype.forEach.call (el.childNodes, function (child) {
     var field = self._pointFields[child.localName];
     if (field) {
@@ -217,6 +218,15 @@ GPXParser.prototype._lonValue = function (s) {
     return null;
   }
 }; // _lonValue
+
+GPXParser.prototype._nnNumberValue = function (s) {
+  var n = this._numberValue (s);
+  if (n != null && n >= 0) {
+    return n;
+  } else {
+    return null;
+  }
+}; // _nnNumberValue
 
 GPXParser.prototype._numberValue = function (s) {
   if (s == null) return;
