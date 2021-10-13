@@ -137,6 +137,7 @@ GPXParser.prototype._point = function (el) {
   point.lat = self._latValue (el.getAttribute ('lat'));
   point.lon = self._lonValue (el.getAttribute ('lon'));
   point.road_type = el.getAttributeNS ('data:,gpx', 'road');
+  point.point_role = el.getAttributeNS ('data:,gpx', 'pointrole');
   point.to_distance = self._nnNumberValue (el.getAttributeNS ('data:,gpx', 'todistance'));
   Array.prototype.forEach.call (el.childNodes, function (child) {
     var field = self._pointFields[child.localName];
@@ -408,7 +409,7 @@ GPXParser.prototype._childText = function (el) {
 
 /* License
 
-Copyright 2016-2018 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2021 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

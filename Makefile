@@ -1,10 +1,20 @@
+GIT = git
+
 all:
 
 deps:
 
-test-deps: deps test-deps-main
+git-submodules:
+	$(GIT) submodule update --init
+
+test-deps: deps git-submodules test-deps-main
 
 test-deps-main: local local/sami-core.js local/sami-test.js
+
+test: test-deps test-main
+
+test-main:
+#XXX
 
 local:
 	mkdir -p local
